@@ -25,7 +25,13 @@ export default function Annotate() {
   const fetchQueue = useCallback(async () => {
     const url = datasetId ? `/api/tasks/queue/?dataset_id=${datasetId}` : "/api/tasks/queue/";
     const res = await client.get(url);
-    setQueue(res.data);
+    // Sort: rejected tasks (have comments) first so annotator sees feedback immediately
+    const sorted = [...res.data].sort((a: Task, b: Task) => {
+      const aHas = a.comments && a.comments.length > 0 ? 0 : 1;
+      const bHas = b.comments && b.comments.length > 0 ? 0 : 1;
+      return aHas - bHas;
+    });
+    setQueue(sorted);
     setLoading(false);
   }, [datasetId]);
 
@@ -133,8 +139,18 @@ export default function Annotate() {
           background: "#e74c3c22", border: "1px solid #e74c3c",
           borderRadius: 8, padding: 16, marginBottom: 16,
         }}>
-          <div style={{ color: "#e74c3c", fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-            Reviewer Feedback ({latestRejection.author.username})
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 6,
+          }}>
+            <span style={{
+              background: "#e74c3c", color: "#fff", padding: "2px 8px",
+              borderRadius: 4, fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+            }}>
+              Rejected — Needs Re-work
+            </span>
+            <span style={{ color: "#e74c3c", fontSize: 12 }}>
+              by {latestRejection.author.username}
+            </span>
           </div>
           <div style={{ color: "#e0e0e0", fontSize: 14 }}>{latestRejection.body}</div>
         </div>

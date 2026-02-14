@@ -378,3 +378,41 @@ def metrics(request):
         "per_annotator": per_annotator,
         "label_distribution": label_counts,
     })
+
+
+# --- Rejection History ---
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def rejection_history(request):
+    """Return detailed rejection history. Annotators see their own, admins see all."""
+    comments_qs = Comment.objects.select_related(
+        "task", "task__dataset", "author"
+    ).order_by("-created_at")
+
+    # Annotators only see rejections on their own tasks
+    if request.user.role == User.Role.ANNOTATOR:
+        comments_qs = comments_qs.filter(task__assigned_to=request.user)
+
+    project_id = request.query_params.get("project_id")
+    if project_id:
+        comments_qs = comments_qs.filter(task__dataset__project_id=project_id)
+
+    results = []
+    for comment in comments_qs:
+        task = comment.task
+        results.append({
+            "id": comment.id,
+            "task_id": task.id,
+            "text_content": task.text_content,
+            "dataset_name": task.dataset.name,
+            "annotator": task.assigned_to.username if task.assigned_to else "unknown",
+            "label_submitted": task.annotation.get("label", "N/A") if isinstance(task.annotation, dict) else "N/A",
+            "reviewer": comment.author.username,
+            "feedback": comment.body,
+            "rejected_at": comment.created_at,
+            "current_status": task.status,
+            "time_spent_seconds": task.time_spent_seconds,
+        })
+
+    return Response(results)

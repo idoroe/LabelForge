@@ -15,4 +15,5 @@ urlpatterns = [
     path("tasks/queue/", views.task_queue, name="task-queue"),
     path("tasks/review-queue/", views.review_queue, name="review-queue"),
     path("metrics/", views.metrics, name="metrics"),
+    path("tasks/rejection-history/", views.rejection_history, name="rejection-history"),
 ]

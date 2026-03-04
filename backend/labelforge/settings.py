@@ -57,16 +57,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "labelforge.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "labelforge"),
-        "USER": os.environ.get("POSTGRES_USER", "labelforge"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "labelforge"),
-        "HOST": os.environ.get("POSTGRES_HOST", "db"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+_db_path = os.environ.get("DB_PATH")
+if _db_path:
+    # Render: SQLite on persistent disk
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": _db_path,
+        }
     }
-}
+else:
+    # Local Docker: PostgreSQL
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB", "labelforge"),
+            "USER": os.environ.get("POSTGRES_USER", "labelforge"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "labelforge"),
+            "HOST": os.environ.get("POSTGRES_HOST", "db"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        }
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 

@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db.models import Q, Count, Avg, F
+from django.db.models.functions import TruncDate
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -328,7 +329,7 @@ def metrics(request):
     # Daily throughput
     daily = (
         tasks.filter(status=Task.Status.APPROVED, reviewed_at__isnull=False)
-        .extra(select={"date": "DATE(reviewed_at)"})
+        .annotate(date=TruncDate("reviewed_at"))
         .values("date")
         .annotate(count=Count("id"))
         .order_by("date")
